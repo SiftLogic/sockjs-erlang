@@ -1,3 +1,5 @@
+-include_lib("pmod_transform/include/pmod.hrl").
+
 -module(sockjs_multiplex_channel, [Conn, Topic]).
 
 -export([send/1, close/0, close/2, info/0]).
