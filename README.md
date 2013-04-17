@@ -106,7 +106,7 @@ simple. It has just a couple of methods:
        can be usefull when your loadbalancer doesn't support them.
      * `{cookie_needed, boolean()}` - is your load balancer relying on
        cookies to get sticky sessions working?
-     * `{heartbeat_delay, integer()}` - how often to send heartbeat
+     * `{server_heartbeat_interval, integer()}` - how often to send heartbeat
        packets (in ms).
      * `{disconnect_delay, integer()}` - how long to hold session state
        after the client was last connected (in ms).
