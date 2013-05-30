@@ -1,8 +1,4 @@
-%% ***** BEGIN LICENSE BLOCK *****
-%% Copyright (c) 2011-2012 VMware, Inc.
-%%
-%% For the license see COPYING.
-%% ***** END LICENSE BLOCK *****
+-include_lib("pmod_transform/include/pmod.hrl").
 
 -module(sockjs_multiplex_channel, [Conn, Topic]).
 
