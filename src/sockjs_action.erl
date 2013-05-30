@@ -76,11 +76,13 @@ iframe(Req, Headers, #service{sockjs_url = SockjsUrl}) ->
 
 -spec info_test(req(), headers(), service()) -> req().
 info_test(Req, Headers, #service{websocket = Websocket,
-                                 cookie_needed = CookieNeeded}) ->
+                                 cookie_needed = CookieNeeded,
+                                 server_heartbeat_interval = ServerHeartbeatInterval}) ->
     I = [{websocket, Websocket},
          {cookie_needed, CookieNeeded},
          {origins, [<<"*:*">>]},
-         {entropy, sockjs_util:rand32()}],
+         {entropy, sockjs_util:rand32()},
+         {server_heartbeat_interval, ServerHeartbeatInterval}],
     D = sockjs_json:encode({I}),
     H = [{"Content-Type", "application/json; charset=UTF-8"}],
     sockjs_http:reply(200, H ++ Headers, D, Req).

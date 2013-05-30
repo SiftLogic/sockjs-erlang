@@ -19,18 +19,18 @@
 -include("sockjs_internal.hrl").
 -type(handle() :: {?MODULE, {pid(), info()}}).
 
--record(session, {id                           :: session(),
-                  outbound_queue = queue:new() :: queue(),
-                  response_pid                 :: pid(),
-                  disconnect_tref              :: reference(),
-                  disconnect_delay = 5000      :: non_neg_integer(),
-                  heartbeat_tref               :: reference() | triggered,
-                  heartbeat_delay = 25000      :: non_neg_integer(),
-                  ready_state = connecting     :: connecting | open | closed,
-                  close_msg                    :: {non_neg_integer(), string()},
+-record(session, {id                                :: session(),
+                  outbound_queue = queue:new()      :: queue(),
+                  response_pid                      :: pid(),
+                  disconnect_tref                   :: reference(),
+                  disconnect_delay = 5000           :: non_neg_integer(),
+                  heartbeat_tref                    :: reference() | triggered,
+                  server_heartbeat_interval = 25000 :: non_neg_integer(),
+                  ready_state = connecting          :: connecting | open | closed,
+                  close_msg                         :: {non_neg_integer(), string()},
                   callback,
                   state,
-                  handle                       :: handle()
+                  handle                            :: handle()
                  }).
 -define(ETS, sockjs_table).
 
@@ -107,13 +107,13 @@ mark_waiting(Pid, State = #session{response_pid    = Pid,
                                    disconnect_tref = undefined}) ->
     State;
 %% 2) Noone else waiting - link and start heartbeat timeout.
-mark_waiting(Pid, State = #session{response_pid    = undefined,
-                                   disconnect_tref = DisconnectTRef,
-                                   heartbeat_delay = HeartbeatDelay})
+mark_waiting(Pid, State = #session{response_pid              = undefined,
+                                   disconnect_tref           = DisconnectTRef,
+                                   server_heartbeat_interval = ServerHeartbeatInterval})
   when DisconnectTRef =/= undefined ->
     link(Pid),
     _ = sockjs_util:cancel_send_after(DisconnectTRef, session_timeout),
-    TRef = erlang:send_after(HeartbeatDelay, self(), heartbeat_triggered),
+    TRef = erlang:send_after(ServerHeartbeatInterval, self(), heartbeat_triggered),
     State#session{response_pid    = Pid,
                   disconnect_tref = undefined,
                   heartbeat_tref  = TRef}.
@@ -174,25 +174,25 @@ emit(What, State = #session{callback = Callback,
 %% --------------------------------------------------------------------------
 
 -spec init({session_or_undefined(), service(), info()}) -> {ok, #session{}}.
-init({SessionId, #service{callback         = Callback,
-                          state            = UserState,
-                          disconnect_delay = DisconnectDelay,
-                          heartbeat_delay  = HeartbeatDelay}, Info}) ->
+init({SessionId, #service{callback                  = Callback,
+                          state                     = UserState,
+                          disconnect_delay          = DisconnectDelay,
+                          server_heartbeat_interval = ServerHeartbeatInterval}, Info}) ->
     case SessionId of
         undefined -> ok;
         _Else     -> ets:insert(?ETS, {SessionId, self()})
     end,
     process_flag(trap_exit, true),
     TRef = erlang:send_after(DisconnectDelay, self(), session_timeout),
-    {ok, #session{id               = SessionId,
-                  callback         = Callback,
-                  state            = UserState,
-                  response_pid     = undefined,
-                  disconnect_tref  = TRef,
-                  disconnect_delay = DisconnectDelay,
-                  heartbeat_tref   = undefined,
-                  heartbeat_delay  = HeartbeatDelay,
-                  handle           = {?MODULE, {self(), Info}}}}.
+    {ok, #session{id                        = SessionId,
+                  callback                  = Callback,
+                  state                     = UserState,
+                  response_pid              = undefined,
+                  disconnect_tref           = TRef,
+                  disconnect_delay          = DisconnectDelay,
+                  heartbeat_tref            = undefined,
+                  server_heartbeat_interval = ServerHeartbeatInterval,
+                  handle                    = {?MODULE, {self(), Info}}}}.
 
 
 handle_call({reply, Pid, _Multiple}, _From, State = #session{
