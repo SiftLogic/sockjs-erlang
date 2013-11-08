@@ -1,9 +1,5 @@
 #!/usr/bin/env escript
-<<<<<<< HEAD
-%%! -pa ebin deps/cowboy/ebin -input
-=======
 %%! -smp disable +A1 +K true -pa ebin -env ERL_LIBS deps -input
->>>>>>> potatosalad/pmod_transform
 -module(cowboy_echo).
 -mode(compile).
 
